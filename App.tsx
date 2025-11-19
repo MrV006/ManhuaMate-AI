@@ -64,6 +64,24 @@ const DEFAULT_GLOSSARY: GlossaryEntry[] = [
   { id: 'gen2', term: 'Hyung', translation: 'هیونگ / داداش' },
   { id: 'gen3', term: 'Noona', translation: 'نونا / آبجی' },
   { id: 'gen4', term: 'Sunbae', translation: 'ارشد' },
+
+  // --- Names / Persons (Examples) ---
+  { id: 'name1', term: 'Main Character', translation: 'شخصیت اصلی' },
+  { id: 'name2', term: 'Xiao', translation: 'شیائو' },
+  { id: 'name3', term: 'Long', translation: 'لونگ (اژدها)' },
+  { id: 'name4', term: 'Feng', translation: 'فنگ (ققنوس)' },
+
+  // --- Places (Examples) ---
+  { id: 'place1', term: 'Mount Hua', translation: 'کوه هوآ' },
+  { id: 'place2', term: 'Capital', translation: 'پایتخت' },
+  { id: 'place3', term: 'Inner Court', translation: 'دربار داخلی' },
+  { id: 'place4', term: 'Pavilion', translation: 'عمارت کلاه‌فرنگی' },
+
+  // --- Techniques / Skills (Examples) ---
+  { id: 'tech1', term: 'Sword Intent', translation: 'قصد شمشیر' },
+  { id: 'tech2', term: 'Fist Technique', translation: 'تکنیک مشت' },
+  { id: 'tech3', term: 'Divine Art', translation: 'هنر الهی' },
+  { id: 'tech4', term: 'Formation', translation: 'آرایه / طلسم' },
 ];
 
 const App: React.FC = () => {

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ManhuaGenre, GlossaryEntry, ProjectSettings } from '../types';
-import { Book, Plus, Trash2, Save, Search, Key, Eye, EyeOff, Check, Cpu, Star, ShieldCheck } from 'lucide-react';
+import { Book, Plus, Trash2, Save, Search, Key, Eye, EyeOff, Check, Cpu, Star, ShieldCheck, Edit2, X } from 'lucide-react';
 
 interface SettingsPanelProps {
   settings: ProjectSettings;
@@ -18,6 +18,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
   const [newTerm, setNewTerm] = useState('');
   const [newTrans, setNewTrans] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Glossary Editing State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{term: string, trans: string}>({term: '', trans: ''});
   
   // API Key Management State
   const [activeKey, setActiveKey] = useState('');
@@ -105,6 +109,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
       ...prev,
       glossary: prev.glossary.filter(g => g.id !== id)
     }));
+  };
+
+  const handleStartEdit = (entry: GlossaryEntry) => {
+    setEditingId(entry.id);
+    setEditValues({ term: entry.term, trans: entry.translation });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditValues({ term: '', trans: '' });
+  };
+
+  const handleSaveEdit = (id: string) => {
+    if (!editValues.term.trim() || !editValues.trans.trim()) return;
+
+    setSettings(prev => ({
+      ...prev,
+      glossary: prev.glossary.map(g => 
+        g.id === id 
+        ? { ...g, term: editValues.term.trim(), translation: editValues.trans.trim() } 
+        : g
+      )
+    }));
+    setEditingId(null);
   };
 
   const handleGenreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -304,20 +332,61 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
               {searchQuery ? 'موردی یافت نشد.' : 'هنوز واژه‌ای اضافه نشده است.'}
             </div>
           )}
-          {filteredGlossary.map(item => (
-            <div key={item.id} className="flex items-center justify-between bg-dark/50 p-2 rounded border border-gray-800 text-sm group hover:border-gray-600 transition-colors">
-              <div className="flex gap-2 overflow-hidden">
-                 <span className="text-gray-200 truncate">{item.translation}</span>
-                 <span className="text-gray-500 text-xs flex items-center truncate">({item.term})</span>
+          {filteredGlossary.map(item => {
+            const isEditing = item.id === editingId;
+            return (
+              <div key={item.id} className={`flex items-center justify-between p-2 rounded border text-sm transition-colors group
+                 ${isEditing ? 'bg-dark/80 border-secondary' : 'bg-dark/50 border-gray-800 hover:border-gray-600'}`}>
+                
+                {isEditing ? (
+                  // Edit Mode
+                  <div className="flex gap-2 w-full items-center">
+                     <input 
+                       className="flex-1 bg-black border border-gray-600 rounded px-2 py-1 text-xs focus:border-secondary focus:outline-none"
+                       value={editValues.trans}
+                       onChange={(e) => setEditValues(prev => ({...prev, trans: e.target.value}))}
+                       placeholder="ترجمه"
+                     />
+                     <input 
+                       className="flex-1 bg-black border border-gray-600 rounded px-2 py-1 text-xs focus:border-secondary focus:outline-none text-left"
+                       value={editValues.term}
+                       onChange={(e) => setEditValues(prev => ({...prev, term: e.target.value}))}
+                       placeholder="Term"
+                       dir="ltr"
+                     />
+                     <div className="flex gap-1">
+                       <button onClick={() => handleSaveEdit(item.id)} className="text-green-500 hover:bg-green-900/30 p-1 rounded"><Check size={14} /></button>
+                       <button onClick={handleCancelEdit} className="text-red-500 hover:bg-red-900/30 p-1 rounded"><X size={14} /></button>
+                     </div>
+                  </div>
+                ) : (
+                  // View Mode
+                  <>
+                    <div className="flex gap-2 overflow-hidden flex-1">
+                       <span className="text-gray-200 truncate">{item.translation}</span>
+                       <span className="text-gray-500 text-xs flex items-center truncate">({item.term})</span>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => handleStartEdit(item)}
+                        className="text-gray-500 hover:text-blue-400 transition-colors"
+                        title="ویرایش"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleRemoveGlossary(item.id)}
+                        className="text-gray-500 hover:text-red-500 transition-colors"
+                        title="حذف"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
-              <button 
-                onClick={() => handleRemoveGlossary(item.id)}
-                className="text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
