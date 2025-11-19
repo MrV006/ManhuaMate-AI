@@ -1,3 +1,4 @@
+
 import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } from "docx";
 import FileSaver from "file-saver";
 import { ManhuaPage } from "../types";
@@ -37,6 +38,21 @@ export const exportToWord = async (pages: ManhuaPage[]) => {
       );
     });
   });
+
+  // Signature Footer
+  docChildren.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "Created by ManhuaMate AI - Dev: Mr.V (github.com/MrV006)",
+          size: 16, // 8pt
+          color: "888888"
+        })
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 400 }
+    })
+  );
 
   const doc = new Document({
     sections: [

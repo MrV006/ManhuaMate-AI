@@ -8,7 +8,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { HistoryPanel } from './components/HistoryPanel';
 import { WordPreview } from './components/WordPreview';
 import { PageNavigator } from './components/PageNavigator';
-import { Upload, Download, Loader2, Image as ImageIcon, FileText, Settings, Clipboard, History, Eye, CheckCircle2 } from 'lucide-react';
+import { Upload, Download, Loader2, Image as ImageIcon, FileText, Settings, Clipboard, History, Eye, CheckCircle2, Github } from 'lucide-react';
 
 // Comprehensive Default Glossary for Manhua/Manhwa
 const DEFAULT_GLOSSARY: GlossaryEntry[] = [
@@ -566,6 +566,19 @@ const App: React.FC = () => {
             )}
 
           </div>
+          
+          {/* Signature Footer */}
+          <div className="p-3 bg-black/20 border-t border-gray-800 flex flex-col items-center justify-center gap-1 text-gray-500 select-none">
+             <div className="flex items-center gap-1 text-xs">
+                <span>ساخته شده توسط</span>
+                <span className="text-primary font-bold">Mr.V</span>
+             </div>
+             <a href="https://github.com/MrV006" target="_blank" rel="noopener noreferrer" className="text-[10px] hover:text-white transition-colors flex items-center gap-1 opacity-60 hover:opacity-100 font-mono">
+               <Github size={10} />
+               github.com/MrV006
+             </a>
+          </div>
+
         </div>
 
         {/* Word Preview Modal */}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ManhuaPage } from '../types';
 import { X, Download, FileText } from 'lucide-react';
@@ -64,8 +65,9 @@ export const WordPreview: React.FC<WordPreviewProps> = ({ page, onClose, onExpor
             </div>
 
             {/* Footer Simulation */}
-            <div className="mt-12 text-center text-gray-400 text-xs border-t pt-4">
-              Created by ManhuaMate AI
+            <div className="mt-12 text-center text-gray-400 text-xs border-t pt-4 flex flex-col gap-1">
+              <span>Created by ManhuaMate AI</span>
+              <span className="text-[10px] opacity-70">Dev: Mr.V (github.com/MrV006)</span>
             </div>
 
           </div>
