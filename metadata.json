@@ -1,0 +1,5 @@
+{
+  "name": "ManhuaMate AI",
+  "description": "An AI-powered assistant for Manhua translators. Upload pages, detect text/context, get smart Persian translations (formal/informal), and export to Word for editors.",
+  "requestFramePermissions": []
+}
