@@ -163,8 +163,10 @@ export const analyzeManhuaPage = async (file: File, settings: ProjectSettings, u
       Return a JSON array of objects. Detect bubbles top-down, right-to-left.
     `;
 
+    const modelName = settings.selectedModel || 'gemini-2.5-flash';
+
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: modelName,
       contents: {
         parts: [
           {

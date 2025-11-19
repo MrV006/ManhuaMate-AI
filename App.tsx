@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ManhuaPage, TranslationItem, ProjectSettings, ManhuaGenre, GlossaryEntry, HistoryItem } from './types';
 import { analyzeManhuaPage } from './services/geminiService';
@@ -80,7 +81,8 @@ const App: React.FC = () => {
   // Global Project Settings
   const [settings, setSettings] = useState<ProjectSettings>({
     genre: ManhuaGenre.SYSTEM,
-    glossary: DEFAULT_GLOSSARY
+    glossary: DEFAULT_GLOSSARY,
+    selectedModel: 'gemini-2.5-flash'
   });
 
   const activePage = pages.find(p => p.id === activePageId) || null;

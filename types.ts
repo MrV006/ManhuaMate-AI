@@ -52,6 +52,7 @@ export interface ManhuaPage {
 export interface ProjectSettings {
   genre: ManhuaGenre;
   glossary: GlossaryEntry[];
+  selectedModel?: string;
 }
 
 export interface HistoryItem {

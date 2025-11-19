@@ -1,11 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { ManhuaGenre, GlossaryEntry, ProjectSettings } from '../types';
-import { Book, Plus, Trash2, Save, Search, Key, Eye, EyeOff, Check } from 'lucide-react';
+import { Book, Plus, Trash2, Save, Search, Key, Eye, EyeOff, Check, Cpu, Star, ShieldCheck } from 'lucide-react';
 
 interface SettingsPanelProps {
   settings: ProjectSettings;
   setSettings: React.Dispatch<React.SetStateAction<ProjectSettings>>;
+}
+
+interface SavedKey {
+  alias: string;
+  key: string;
+  addedAt: number;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings }) => {
@@ -13,32 +19,69 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
   const [newTrans, setNewTrans] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // API Key State
-  const [apiKey, setApiKey] = useState('');
-  const [showKey, setShowKey] = useState(false);
-  const [keySaved, setKeySaved] = useState(false);
+  // API Key Management State
+  const [activeKey, setActiveKey] = useState('');
+  const [inputKey, setInputKey] = useState('');
+  const [inputAlias, setInputAlias] = useState('');
+  const [showInputKey, setShowInputKey] = useState(false);
+  const [savedKeys, setSavedKeys] = useState<SavedKey[]>([]);
 
   useEffect(() => {
+    // Load active key
     const storedKey = localStorage.getItem('gemini_api_key');
-    if (storedKey) {
-      setApiKey(storedKey);
-      setKeySaved(true);
+    if (storedKey) setActiveKey(storedKey);
+
+    // Load saved keys
+    const storedSavedKeys = localStorage.getItem('saved_api_keys');
+    if (storedSavedKeys) {
+      try {
+        setSavedKeys(JSON.parse(storedSavedKeys));
+      } catch (e) {
+        console.error("Failed to parse saved keys", e);
+      }
     }
   }, []);
 
-  const handleSaveKey = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
-      setKeySaved(true);
+  const handleAddKey = () => {
+    if (!inputKey.trim()) return;
+
+    const newKeyEntry: SavedKey = {
+      alias: inputAlias.trim() || `Key ${savedKeys.length + 1}`,
+      key: inputKey.trim(),
+      addedAt: Date.now()
+    };
+
+    const updatedKeys = [...savedKeys, newKeyEntry];
+    setSavedKeys(updatedKeys);
+    localStorage.setItem('saved_api_keys', JSON.stringify(updatedKeys));
+
+    // If no active key, set this one as active
+    if (!activeKey) {
+      setActiveKey(newKeyEntry.key);
+      localStorage.setItem('gemini_api_key', newKeyEntry.key);
+    }
+
+    setInputKey('');
+    setInputAlias('');
+  };
+
+  const handleSelectKey = (key: string) => {
+    setActiveKey(key);
+    localStorage.setItem('gemini_api_key', key);
+  };
+
+  const handleDeleteKey = (keyToDelete: string) => {
+    const updatedKeys = savedKeys.filter(k => k.key !== keyToDelete);
+    setSavedKeys(updatedKeys);
+    localStorage.setItem('saved_api_keys', JSON.stringify(updatedKeys));
+
+    if (activeKey === keyToDelete) {
+      setActiveKey('');
+      localStorage.removeItem('gemini_api_key');
     }
   };
 
-  const handleClearKey = () => {
-    localStorage.removeItem('gemini_api_key');
-    setApiKey('');
-    setKeySaved(false);
-  };
-
+  // Glossary Functions
   const handleAddGlossary = () => {
     if (!newTerm.trim() || !newTrans.trim()) return;
     
@@ -68,6 +111,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
     setSettings(prev => ({ ...prev, genre: e.target.value as ManhuaGenre }));
   };
 
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSettings(prev => ({ ...prev, selectedModel: e.target.value }));
+  };
+
   // Filter Logic
   const filteredGlossary = settings.glossary.filter(item => 
     item.term.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -77,58 +124,115 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6 text-right" dir="rtl">
       
-      {/* API Key Section */}
+      {/* Model Selection Section */}
+      <section className="bg-surface p-4 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-900/10">
+         <div className="flex items-center gap-2 mb-3 text-blue-400">
+            <Cpu size={20} />
+            <h3 className="font-bold">مدل هوش مصنوعی</h3>
+         </div>
+         <p className="text-xs text-gray-400 mb-3">
+           انتخاب مدل مناسب می‌تواند بر کیفیت و سرعت ترجمه تاثیر بگذارد.
+         </p>
+         <select 
+            value={settings.selectedModel || 'gemini-2.5-flash'}
+            onChange={handleModelChange}
+            className="w-full bg-dark border border-gray-600 rounded p-2 text-white text-sm focus:border-blue-500 focus:outline-none mb-2"
+         >
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (سریع و بهینه - پیشنهادی)</option>
+            <option value="gemini-3-pro-preview">Gemini 3.0 Pro (دقیق‌تر و هوشمندتر - کندتر)</option>
+         </select>
+         <div className="text-[10px] text-gray-500 flex items-center gap-1">
+            <Star size={10} className="text-yellow-500" />
+            مدل Flash برای اکثر مانها‌ها کافی است. اگر متن‌های پیچیده (مثل Wuxia) دارید، از Pro استفاده کنید.
+         </div>
+      </section>
+
+      {/* API Key Management Section */}
       <section className="bg-surface p-4 rounded-lg border border-indigo-500/30 shadow-lg shadow-indigo-900/10">
         <div className="flex items-center gap-2 mb-3 text-indigo-400">
           <Key size={20} />
-          <h3 className="font-bold">تنظیمات API Key</h3>
+          <h3 className="font-bold">مدیریت کلیدهای API</h3>
         </div>
-        <p className="text-xs text-gray-400 mb-3">
-          کلید اختصاصی Gemini خود را اینجا وارد کنید. این کلید فقط در مرورگر شما ذخیره می‌شود.
-        </p>
         
-        <div className="relative mb-3">
-          <input 
-            type={showKey ? "text" : "password"}
-            placeholder="AIzaSy..."
-            className="w-full bg-dark border border-gray-600 rounded p-2 pl-10 text-sm text-white focus:border-indigo-500 focus:outline-none font-mono text-left"
-            dir="ltr"
-            value={apiKey}
-            onChange={(e) => {
-              setApiKey(e.target.value);
-              setKeySaved(false);
-            }}
-          />
-          <button 
-            onClick={() => setShowKey(!showKey)}
-            className="absolute top-2.5 left-3 text-gray-500 hover:text-white"
-          >
-            {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
+        {/* Add New Key */}
+        <div className="bg-dark/30 p-3 rounded-lg mb-4 border border-gray-700/50">
+           <p className="text-xs text-gray-400 mb-2 font-bold">افزودن کلید جدید:</p>
+           <div className="space-y-2">
+             <div className="relative">
+                <input 
+                  type={showInputKey ? "text" : "password"}
+                  placeholder="کلید API (AIzaSy...)"
+                  className="w-full bg-dark border border-gray-600 rounded p-2 pl-10 text-sm text-white focus:border-indigo-500 focus:outline-none font-mono text-left"
+                  dir="ltr"
+                  value={inputKey}
+                  onChange={(e) => setInputKey(e.target.value)}
+                />
+                <button 
+                  onClick={() => setShowInputKey(!showInputKey)}
+                  className="absolute top-2.5 left-3 text-gray-500 hover:text-white"
+                >
+                  {showInputKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+             </div>
+             <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="نام مستعار (مثلاً: کلید شخصی)"
+                  className="flex-1 bg-dark border border-gray-600 rounded p-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  value={inputAlias}
+                  onChange={(e) => setInputAlias(e.target.value)}
+                />
+                <button 
+                  onClick={handleAddKey}
+                  disabled={!inputKey}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded text-xs transition-colors flex items-center gap-1"
+                >
+                  <Plus size={14} /> افزودن
+                </button>
+             </div>
+           </div>
         </div>
 
-        <div className="flex gap-2 justify-end">
-          {keySaved && (
-             <span className="flex items-center gap-1 text-xs text-green-400 ml-auto self-center">
-                <Check size={14} /> ذخیره شد
-             </span>
-          )}
-          {keySaved ? (
-            <button 
-              onClick={handleClearKey}
-              className="bg-red-900/20 hover:bg-red-900/40 text-red-400 px-3 py-1.5 rounded text-xs transition-colors border border-red-900/50"
-            >
-              حذف کلید
-            </button>
-          ) : (
-            <button 
-              onClick={handleSaveKey}
-              disabled={!apiKey}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-1.5 rounded text-xs transition-colors"
-            >
-              ذخیره در حافظه
-            </button>
-          )}
+        {/* List of Keys */}
+        <div className="space-y-2">
+           {savedKeys.length === 0 && (
+              <div className="text-center text-gray-600 text-xs py-2 italic">
+                 هیچ کلیدی ذخیره نشده است.
+              </div>
+           )}
+           {savedKeys.map((k) => {
+             const isActive = k.key === activeKey;
+             return (
+               <div key={k.key} className={`flex items-center justify-between p-3 rounded border transition-colors ${isActive ? 'bg-indigo-900/20 border-indigo-500/50' : 'bg-dark/50 border-gray-700'}`}>
+                 <div className="flex flex-col overflow-hidden">
+                    <div className="flex items-center gap-2">
+                       <span className={`font-bold text-sm truncate ${isActive ? 'text-indigo-300' : 'text-gray-300'}`}>{k.alias}</span>
+                       {isActive && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/30 flex items-center gap-1"><ShieldCheck size={10}/> فعال</span>}
+                    </div>
+                    <span className="text-[10px] text-gray-500 font-mono text-left dir-ltr truncate max-w-[200px]" dir="ltr">
+                       {k.key.substring(0, 8)}...{k.key.substring(k.key.length - 4)}
+                    </span>
+                 </div>
+                 <div className="flex gap-2 shrink-0">
+                    {!isActive && (
+                      <button 
+                        onClick={() => handleSelectKey(k.key)}
+                        className="text-gray-400 hover:text-indigo-400 text-xs border border-gray-700 hover:border-indigo-500 px-2 py-1 rounded transition-colors"
+                      >
+                        انتخاب
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => handleDeleteKey(k.key)}
+                      className="text-gray-500 hover:text-red-500 p-1.5 rounded transition-colors"
+                      title="حذف"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                 </div>
+               </div>
+             );
+           })}
         </div>
       </section>
 
@@ -138,7 +242,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
           <Book size={20} />
           <h3 className="font-bold">سبک و ژانر (Context)</h3>
         </div>
-        <p className="text-xs text-gray-400 mb-2">انتخاب ژانر صحیح به هوش مصنوعی کمک می‌کند تا لحن مناسب (تاریخی، لات، رسمی) را انتخاب کند.</p>
         <select 
           value={settings.genre} 
           onChange={handleGenreChange}
@@ -156,10 +259,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSetti
           <Save size={20} />
           <h3 className="font-bold">واژه‌نامه تخصصی (Glossary)</h3>
         </div>
-        <p className="text-xs text-gray-400 mb-4">
-          کلمات خاص (نام‌ها، رتبه‌ها) را اینجا وارد کنید تا در ترجمه رعایت شوند.
-        </p>
-
+        
         {/* Add New Term */}
         <div className="flex gap-2 mb-4">
           <input 

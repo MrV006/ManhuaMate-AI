@@ -38,7 +38,13 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
           {/* Thumbnail */}
           <div className="w-full h-full rounded-md overflow-hidden bg-gray-900 flex items-center justify-center relative">
             {page.imageUrl ? (
-              <img src={page.imageUrl} alt={`Page ${index + 1}`} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" />
+              <img 
+                src={page.imageUrl} 
+                alt={`Page ${index + 1}`} 
+                className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" 
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <ImageIcon size={20} className="text-gray-600" />
             )}
