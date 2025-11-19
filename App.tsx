@@ -262,7 +262,40 @@ const App: React.FC = () => {
     }
   }, [processFile]);
 
-  // Global Paste Listener
+  // Clipboard Paste Button Logic
+  const handlePasteClick = async () => {
+    try {
+      // Check if API is supported
+      if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+         throw new Error("Clipboard API not fully supported");
+      }
+
+      const items = await navigator.clipboard.read();
+      let foundImage = false;
+      
+      for (const item of items) {
+        // Check for image types
+        const imageType = item.types.find(t => t.startsWith('image/'));
+        
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const file = new File([blob], `Clipboard_${Date.now()}.png`, { type: imageType });
+          processFile(file);
+          foundImage = true;
+          break; 
+        }
+      }
+      
+      if (!foundImage) {
+        alert("هیچ تصویری در کلیپ‌بورد یافت نشد.");
+      }
+    } catch (err) {
+      console.error('Clipboard error:', err);
+      alert("امکان خواندن خودکار کلیپ‌بورد وجود ندارد (محدودیت مرورگر).\nلطفاً روی صفحه کلیک کنید و از کلیدهای Ctrl + V استفاده کنید.");
+    }
+  };
+
+  // Global Paste Listener (Fallback & Shortcut)
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -381,7 +414,7 @@ const App: React.FC = () => {
             className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-md flex items-center gap-2 text-sm transition-colors border border-gray-700"
           >
             <History size={16} />
-            <span className="hidden sm:inline">ایجاد بخش تاریخچه ترجمه</span>
+            <span className="hidden sm:inline">تاریخچه</span>
           </button>
 
           {pages.length > 0 && (
@@ -392,7 +425,7 @@ const App: React.FC = () => {
                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md flex items-center gap-2 text-sm transition-colors shadow-md"
                >
                  <Eye size={16} />
-                 <span className="hidden sm:inline">نمایش پیش‌نمایش در Word</span>
+                 <span className="hidden sm:inline">پیش‌نمایش</span>
                </button>
 
                {/* Export Button */}
@@ -401,7 +434,7 @@ const App: React.FC = () => {
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium shadow-lg shadow-green-900/20 transition-all"
                >
                  <Download size={18} />
-                 {pages.length > 1 ? "دانلود کل صفحات (Word)" : "دانلود فایل (Word)"}
+                 {pages.length > 1 ? "دانلود همه" : "دانلود"}
                </button>
             </>
           )}
@@ -422,6 +455,7 @@ const App: React.FC = () => {
               onSelect={setActivePageId}
               onDelete={handleDeletePage}
               onAdd={processFile}
+              onPaste={handlePasteClick}
             />
           )}
 
@@ -441,18 +475,29 @@ const App: React.FC = () => {
                     <Upload size={48} className="text-primary" />
                   </div>
                   <h2 className="text-2xl font-bold mb-2">تصویر مانها را اینجا رها کنید</h2>
+                  <p className="text-gray-400 mb-8 text-sm">یا از دکمه‌های زیر استفاده کنید</p>
                   
-                  <div className="flex items-center gap-2 text-gray-400 mb-6 bg-surface/50 px-4 py-2 rounded-lg border border-gray-700/50">
-                    <Clipboard size={16} />
-                    <span>یا کلیدهای <kbd className="font-mono bg-gray-700 px-1 rounded text-white">Ctrl + V</kbd> را فشار دهید</span>
+                  <div className="flex flex-row gap-4">
+                      <label className="cursor-pointer">
+                        <span className="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg shadow-primary/25 flex items-center gap-2">
+                          <ImageIcon size={20} />
+                          انتخاب فایل
+                        </span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleFileSelect} />
+                      </label>
+
+                      <button 
+                         onClick={handlePasteClick}
+                         className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors border border-gray-600 shadow-lg flex items-center gap-2"
+                      >
+                        <Clipboard size={20} />
+                        جایگذاری (Paste)
+                      </button>
                   </div>
                   
-                  <label className="cursor-pointer">
-                    <span className="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg shadow-primary/25">
-                      انتخاب فایل
-                    </span>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileSelect} />
-                  </label>
+                  <div className="mt-6 text-xs text-gray-500 font-mono bg-black/20 px-3 py-1 rounded">
+                     میانبر: Ctrl + V
+                  </div>
                 </div>
               )
             ) : (

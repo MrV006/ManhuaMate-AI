@@ -1,6 +1,7 @@
+
 import React, { useRef } from 'react';
 import { ManhuaPage } from '../types';
-import { Plus, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Image as ImageIcon, Loader2, Clipboard } from 'lucide-react';
 
 interface PageNavigatorProps {
   pages: ManhuaPage[];
@@ -8,6 +9,7 @@ interface PageNavigatorProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onAdd: (file: File) => void;
+  onPaste: () => void;
 }
 
 export const PageNavigator: React.FC<PageNavigatorProps> = ({
@@ -15,7 +17,8 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
   activePageId,
   onSelect,
   onDelete,
-  onAdd
+  onAdd,
+  onPaste
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +84,16 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
       >
         <Plus size={24} className="group-hover:scale-110 transition-transform" />
       </button>
+
+      {/* Paste Button */}
+      <button 
+        onClick={onPaste}
+        className="w-12 h-12 rounded-full bg-gray-800/80 hover:bg-indigo-600 border border-dashed border-gray-500 hover:border-indigo-400 flex items-center justify-center text-gray-400 hover:text-white transition-all flex-shrink-0 group"
+        title="جایگذاری تصویر از کلیپ‌بورد"
+      >
+        <Clipboard size={20} className="group-hover:scale-110 transition-transform" />
+      </button>
+
       <input 
         type="file" 
         className="hidden" 
