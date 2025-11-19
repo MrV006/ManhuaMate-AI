@@ -47,6 +47,9 @@ export interface ManhuaPage {
   imageFile: File;
   translations: TranslationItem[];
   isAnalyzing: boolean;
+  // Undo/Redo History
+  history: TranslationItem[][];
+  historyIndex: number;
 }
 
 export interface ProjectSettings {

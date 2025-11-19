@@ -98,6 +98,61 @@ const App: React.FC = () => {
     setPages(prev => prev.map(p => p.id === id ? updater(p) : p));
   }, []);
 
+  // --- UNDO / REDO LOGIC ---
+
+  const handleTranslationChange = (newTranslations: TranslationItem[]) => {
+    updateActivePage(p => ({
+      ...p,
+      translations: newTranslations
+    }));
+  };
+
+  const handleHistoryCommit = () => {
+    updateActivePage(p => {
+      // Avoid duplicate history entries
+      const lastHistory = p.history[p.historyIndex];
+      if (JSON.stringify(lastHistory) === JSON.stringify(p.translations)) {
+          return p;
+      }
+
+      const currentHistory = p.history.slice(0, p.historyIndex + 1);
+      const newHistory = [...currentHistory, p.translations];
+      
+      // Limit history size to 50 states
+      if (newHistory.length > 50) newHistory.shift();
+
+      return {
+        ...p,
+        history: newHistory,
+        historyIndex: newHistory.length - 1
+      };
+    });
+  };
+
+  const handleUndo = () => {
+    updateActivePage(p => {
+      if (p.historyIndex <= 0) return p;
+      const newIndex = p.historyIndex - 1;
+      return {
+        ...p,
+        historyIndex: newIndex,
+        translations: p.history[newIndex]
+      };
+    });
+  };
+
+  const handleRedo = () => {
+    updateActivePage(p => {
+      if (p.historyIndex >= p.history.length - 1) return p;
+      const newIndex = p.historyIndex + 1;
+      return {
+        ...p,
+        historyIndex: newIndex,
+        translations: p.history[newIndex]
+      };
+    });
+  };
+
   // --- AUTO SAVE LOGIC ---
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -148,7 +203,9 @@ const App: React.FC = () => {
       imageUrl: objectUrl,
       imageFile: file,
       translations: [],
-      isAnalyzing: true
+      isAnalyzing: true,
+      history: [[]], // Initial empty history
+      historyIndex: 0
     };
     
     // Append new page and make it active
@@ -161,7 +218,13 @@ const App: React.FC = () => {
 
     try {
       const translations = await analyzeManhuaPage(file, settings, userApiKey);
-      updatePageById(pageId, (p) => ({ ...p, translations, isAnalyzing: false }));
+      updatePageById(pageId, (p) => ({ 
+        ...p, 
+        translations, 
+        isAnalyzing: false,
+        history: [translations], // Reset history to the analyzed result
+        historyIndex: 0
+      }));
     } catch (error: any) {
       console.error("Analysis failed", error);
       updatePageById(pageId, (p) => ({ ...p, isAnalyzing: false }));
@@ -244,7 +307,9 @@ const App: React.FC = () => {
       imageUrl: "", // Image is lost on reload, UI handles this
       imageFile: dummyFile,
       translations: item.translations,
-      isAnalyzing: false
+      isAnalyzing: false,
+      history: [item.translations],
+      historyIndex: 0
     };
 
     setPages(prev => [...prev, newPage]);
@@ -451,13 +516,12 @@ const App: React.FC = () => {
               {activePage ? (
                  <Editor 
                    translations={activePage.translations} 
-                   setTranslations={(newTrans) => {
-                     // Update only the active page translations
-                     updateActivePage((p) => ({
-                        ...p,
-                        translations: typeof newTrans === 'function' ? newTrans(p.translations) : newTrans
-                     }));
-                   }}
+                   onChange={handleTranslationChange}
+                   onCommit={handleHistoryCommit}
+                   onUndo={handleUndo}
+                   onRedo={handleRedo}
+                   canUndo={(activePage.historyIndex || 0) > 0}
+                   canRedo={(activePage.historyIndex || 0) < (activePage.history?.length || 0) - 1}
                  />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-50 p-8 text-center">
