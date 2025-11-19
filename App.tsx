@@ -201,6 +201,27 @@ const App: React.FC = () => {
     return () => window.removeEventListener('paste', handlePaste);
   }, [processFile]);
 
+  // Keyboard Shortcuts Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl (Windows/Linux) or Meta (Mac Command)
+      if (e.ctrlKey || e.metaKey) {
+        const key = e.key.toLowerCase();
+        
+        if (key === 'e') {
+          e.preventDefault();
+          setActiveTab('editor');
+        } else if (key === 's') {
+          e.preventDefault();
+          setActiveTab('settings');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = () => { setIsDragging(false); };
   const handleDrop = (e: React.DragEvent) => {
@@ -404,6 +425,7 @@ const App: React.FC = () => {
               onClick={() => setActiveTab('editor')}
               className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative
                 ${activeTab === 'editor' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+              title="میانبر: Ctrl+E"
             >
               <FileText size={16} />
               ترجمه‌ها
@@ -413,6 +435,7 @@ const App: React.FC = () => {
               onClick={() => setActiveTab('settings')}
               className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative
                 ${activeTab === 'settings' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+              title="میانبر: Ctrl+S"
             >
               <Settings size={16} />
               تنظیمات پروژه
